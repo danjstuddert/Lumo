@@ -16,20 +16,27 @@ public class PlayerController : MonoBehaviour {
     public float amplitude;
     public float speed;
 
-	Rigidbody myRigidbody;
-	Camera viewCamera;
-	Vector3 velocity;
+    [Header("Light")]
+    public Light viewLight;
+    public float lightRangeScale;
+    public float lightIntensityScale;
+    public float maxIntensity;
+
+	private Rigidbody rBody;
+	private Vector3 velocity;
 
     private bool isExpanding;
     private FieldOfView fieldOfView;
     private float index;
 
 	void Start () {
-		myRigidbody = GetComponent<Rigidbody> ();
-		viewCamera = Camera.main;
+		rBody = GetComponent<Rigidbody> ();
 
         fieldOfView = GetComponent<FieldOfView>();
         fieldOfView.Init(viewRadius);
+
+        viewLight = GetComponentInChildren<Light>();
+        UpdateLightRadius(viewRadius);
 	}
 
 	void Update () {
@@ -39,7 +46,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
     void FixedUpdate() {
-        myRigidbody.MovePosition(myRigidbody.position + velocity * Time.fixedDeltaTime);
+        rBody.MovePosition(rBody.position + velocity * Time.fixedDeltaTime);
     }
 
     private void UpdateVelocity() {
@@ -48,9 +55,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void CheckInput() {
-        if(Input.GetButtonDown("Light") && isExpanding == false){
+        if(Input.GetButtonDown("Light") && isExpanding == false)
             StartCoroutine("ExpandLight");
-        }
     }
 
     private void UpdateFlicker() {
@@ -58,7 +64,17 @@ public class PlayerController : MonoBehaviour {
             return;
 
         index += Time.deltaTime;
-        fieldOfView.UpdateViewRadius(Mathf.Abs(viewRadius + (amplitude * Mathf.Sin(speed * index))));
+        float flickerAmount = Mathf.Abs(viewRadius + (amplitude * Mathf.Sin(speed * index)));
+        fieldOfView.UpdateViewRadius(flickerAmount);
+        UpdateLightRadius(flickerAmount);
+    }
+
+    private void UpdateLightRadius(float newAmount){
+        viewLight.range = newAmount * lightRangeScale;
+        viewLight.intensity = newAmount * lightIntensityScale;
+
+        if (viewLight.intensity > maxIntensity)
+            viewLight.intensity = maxIntensity;
     }
 
     private IEnumerator ExpandLight(){
@@ -71,8 +87,10 @@ public class PlayerController : MonoBehaviour {
             currentLerpTime += Time.deltaTime;
 
             float t = expandCurve.Evaluate(currentLerpTime / expandTime);
+            float lerpAmount = Mathf.Lerp(originalViewRadius, expandedRadius, t);
 
-            fieldOfView.UpdateViewRadius(Mathf.Lerp(originalViewRadius, expandedRadius, t));
+            fieldOfView.UpdateViewRadius(lerpAmount);
+            UpdateLightRadius(lerpAmount);
             yield return null;
         }
 
@@ -83,8 +101,10 @@ public class PlayerController : MonoBehaviour {
             currentLerpTime += Time.deltaTime;
 
             float t = retractCurve.Evaluate(currentLerpTime / retractTime);
+            float lerpAmount = Mathf.Lerp(expandedRadius, originalViewRadius, t);
 
-            fieldOfView.UpdateViewRadius(Mathf.Lerp(expandedRadius, originalViewRadius, t));
+            fieldOfView.UpdateViewRadius(lerpAmount);
+            UpdateLightRadius(lerpAmount);
             yield return null;
         }
 
