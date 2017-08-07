@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof(FieldOfView))]
+[RequireComponent(typeof(ShakeChild))]
 public class PlayerController : MonoBehaviour {
     public float moveSpeed;
 
@@ -22,12 +24,18 @@ public class PlayerController : MonoBehaviour {
     public float lightIntensityScale;
     public float maxIntensity;
 
+    [Header("Sprite")]
+    public float shakeDuration;
+    public float shakeMagnitude;
+
 	private Rigidbody rBody;
 	private Vector3 velocity;
 
     private bool isExpanding;
     private FieldOfView fieldOfView;
     private float index;
+
+    private ShakeChild shake;
 
 	void Start () {
 		rBody = GetComponent<Rigidbody> ();
@@ -37,6 +45,8 @@ public class PlayerController : MonoBehaviour {
 
         viewLight = GetComponentInChildren<Light>();
         UpdateLightRadius(viewRadius);
+
+        shake = GetComponent<ShakeChild>();
 	}
 
 	void Update () {
@@ -78,6 +88,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     private IEnumerator ExpandLight(){
+        shake.Shake(shakeDuration, shakeMagnitude);
+
         isExpanding = true;
 
         float currentLerpTime = 0f;
