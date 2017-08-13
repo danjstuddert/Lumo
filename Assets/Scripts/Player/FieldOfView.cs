@@ -13,7 +13,7 @@ public class FieldOfView : MonoBehaviour {
     public float edgeDistanceThreshold;
     public float maskCutawayDistance;
 
-    [HideInInspector]
+    //[HideInInspector]
     public List<Transform> visibleTargets = new List<Transform>();
 
     public float CurrentViewRadius { get; private set; }
@@ -54,6 +54,9 @@ public class FieldOfView : MonoBehaviour {
     }
 
     private void DrawFieldOfView() {
+        if (viewMesh == null)
+            return;
+
         int stepCount = (int)(viewAngle * meshResolution);
         float stepAngleSize = viewAngle / stepCount;
         List<Vector3> viewPoints = new List<Vector3>();
@@ -151,6 +154,9 @@ public class FieldOfView : MonoBehaviour {
 
                 if (Physics.Raycast(transform.position, directionToTarget, distanceToTarget, obstacleMask) == false) {
                     visibleTargets.Add(target);
+
+					if (target.GetComponent<Enemy>())
+						target.GetComponent<Enemy>().DetectedPlayer();
                 }
             }
         }
